@@ -1,9 +1,7 @@
-
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton
 from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtGui import QPainter, QFont, QMouseEvent, QColor, QPixmap
 from PyQt5 import QtCore, QtGui
-
 
 class UIButton(QWidget):
     btn_width = 20
@@ -13,10 +11,7 @@ class UIButton(QWidget):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.pix = QBitmap("./Resources/Images/back.png")
-        # print(self.pix.size())
-        # self.resize(self.pix.size())
-        self.setFixedSize(500, 500)
+        self.setFixedSize(300, 300)  # 调整窗口大小
         self.outerPieRadius = 100
 
         self.mouseCenterView = False
@@ -33,13 +28,13 @@ class UIButton(QWidget):
         self.outerChampagnePercent = 90
 
         self.setMouseTracking(True)  # 设置鼠标自动跟踪
-        # 新增：添加主题切换按钮
+
+        # 添加主题切换按钮
         self.theme_button = QPushButton("切换主题", self)
         self.theme_button.setGeometry(10, 10, 80, 30)
         self.theme_button.clicked.connect(self.toggle_theme)
 
         self.light_theme = """
-
         QPushButton {
             background-color: lightgray;
             color: black;
@@ -47,7 +42,6 @@ class UIButton(QWidget):
         """
 
         self.dark_theme = """
-
         QPushButton {
             background-color: darkgray;
             color: white;
@@ -57,6 +51,8 @@ class UIButton(QWidget):
         self.is_light_theme = True
         self.setStyleSheet(self.light_theme)
 
+        self.clicked_button = None  # 用于跟踪被点击的按钮
+
     def toggle_theme(self):
         self.is_light_theme = not self.is_light_theme
         if self.is_light_theme:
@@ -64,414 +60,360 @@ class UIButton(QWidget):
         else:
             self.setStyleSheet(self.dark_theme)
 
-    def get_button_color(self):
+    def get_button_color(self, is_clicked):
         if self.is_light_theme:
-            return Qt.darkGray
+            return Qt.darkGray if not is_clicked else Qt.red
         else:
-            return Qt.black
-
+            return Qt.black if not is_clicked else Qt.red
 
     def drawOuterPie(self, painter):
-        """
-        绘制右下侧按钮
-        :param painter:
-        :return:
-        """
         painter.save()
-        # 以下绘图保存至painter的坐标系统
-        # 设置标志位，判断鼠标是否进入该区域。如果进入该区域，则半径扩大
         if self.mouseRightView:
             radius1 = self.outerPieRadius + 4
         else:
             radius1 = self.outerPieRadius
 
-        # 绘制大扇形
-
-        rect = QtCore.QRectF(-radius1/2, -radius1/2, radius1, radius1)  # 该扇形饼圆所在的region
-        pathOuterChampagnePie = QtGui.QPainterPath()  # 新建QPainterPath对象
-        pathOuterChampagnePie.arcMoveTo(rect, -45)  # 画弧线的起点角度，从0°开始
-        pathOuterChampagnePie.arcTo(rect, -45, 45)  # 扇形饼圆弧度为self.outerChampagnePercent * 360
-        pathOuterChampagnePie.lineTo(0, 0)  # 画直线
-        pathOuterChampagnePie.closeSubpath()  # 使该路径闭合
-        pathOuterChampagnePie.addText(radius1 / 2 - 20 , 18, painter.font(), "2")
-       
-        # painter.restore()
-        # 以下同理绘制小扇形
+        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)
+        pathOuterChampagnePie = QtGui.QPainterPath()
+        pathOuterChampagnePie.arcMoveTo(rect, -22.5)
+        pathOuterChampagnePie.arcTo(rect, -22.5, 45)
+        pathOuterChampagnePie.lineTo(0, 0)
+        pathOuterChampagnePie.closeSubpath()
+        # pathOuterChampagnePie.addText(radius1 / 2 - 20, 5, painter.font(), "2")
         radius = 50
-        rect1 = QtCore.QRectF(-radius/2, -radius/2, radius, radius)
+        rect1 = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
         pathMidPie = QtGui.QPainterPath()
-        pathMidPie.arcMoveTo(rect1, -45)
-        pathMidPie.arcTo(rect1, -45, 45)
+        pathMidPie.arcMoveTo(rect1, -22.5)
+        pathMidPie.arcTo(rect1, -22.5, 45)
         pathMidPie.lineTo(0, 0)
         pathMidPie.closeSubpath()
 
-        # 大扇形减去小扇形，得到扇形饼圆
         self.rightBtnView = pathOuterChampagnePie.subtracted(pathMidPie)
-        painter.setPen(QColor(255, 255, 255))  # 边框线条无色
-        painter.setBrush(self.get_button_color())
+        painter.setPen(QColor(255, 255, 255))
+        painter.setBrush(self.get_button_color(self.clicked_button == 'rightBtnView'))
         painter.drawPath(self.rightBtnView)
-        #
-        painter.restore()  # 恢复坐标系
+
+
+        icon = QPixmap('./icon/ViaRight.png')
+        icon_size = 18  # 设置图标大小
+        scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_rect = scaled_icon.rect()
+        icon_rect.moveCenter(QtCore.QPoint(radius1 / 2 - 12, 0))  # 将图标中心移动到按钮中心
+
+        # # 绘制图标
+        # icon = QPixmap('./icons/refresh_ico.png')
+        # icon_size = 32
+        # scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        # icon_rect = scaled_icon.rect()
+        # icon_rect.moveCenter(QtCore.QPoint(radius1 / 2 - 20, 5))
+        painter.drawPixmap(icon_rect, scaled_icon)
+
+        painter.restore()
+
+
 
     def drawuprightOuterPie(self, painter):
-        """
-        绘制右上侧按钮
-        :param painter:
-        :return:
-        """
         painter.save()
-        # 以下绘图保存至painter的坐标系统
-        # 设置标志位，判断鼠标是否进入该区域。如果进入该区域，则半径扩大
         if self.mouseUpRightView:
             radius1 = self.outerPieRadius + 4
         else:
             radius1 = self.outerPieRadius
 
-        # 绘制大扇形
+        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)
+        pathOuterChampagnePie = QtGui.QPainterPath()
+        pathOuterChampagnePie.arcMoveTo(rect, 22.5)
+        pathOuterChampagnePie.arcTo(rect, 22.5, 45)
+        pathOuterChampagnePie.lineTo(0, 0)
+        pathOuterChampagnePie.closeSubpath()
+        # pathOuterChampagnePie.addText(radius1 / 2 - 28, -20, painter.font(), "1")
 
-        rect = QtCore.QRectF(-radius1/2, -radius1/2, radius1, radius1)  # 该扇形饼圆所在的region
-        pathOuterChampagnePie = QtGui.QPainterPath()  # 新建QPainterPath对象
-        pathOuterChampagnePie.arcMoveTo(rect, 0)  # 画弧线的起点角度，从0°开始
-        pathOuterChampagnePie.arcTo(rect, 0, 45)  # 扇形饼圆弧度为self.outerChampagnePercent * 360
-        pathOuterChampagnePie.lineTo(0, 0)  # 画直线
-        pathOuterChampagnePie.closeSubpath()  # 使该路径闭合
-        pathOuterChampagnePie.addText(radius1 / 2 -20, -10, painter.font(), "1")
-       
-        # painter.restore()
-        # 以下同理绘制小扇形
         radius = 50
-        rect1 = QtCore.QRectF(-radius/2, -radius/2, radius, radius)
+        rect1 = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
         pathMidPie = QtGui.QPainterPath()
-        pathMidPie.arcMoveTo(rect1, 0)
-        pathMidPie.arcTo(rect1, 0, 45)
+        pathMidPie.arcMoveTo(rect1, 22.5)
+        pathMidPie.arcTo(rect1, 22.5, 45)
         pathMidPie.lineTo(0, 0)
         pathMidPie.closeSubpath()
 
-        # 大扇形减去小扇形，得到扇形饼圆
         self.uprightBtnView = pathOuterChampagnePie.subtracted(pathMidPie)
-        painter.setPen(QColor(255, 255, 255))  # 边框线条无色
-        painter.setBrush(self.get_button_color())
+        painter.setPen(QColor(255, 255, 255))
+        painter.setBrush(self.get_button_color(self.clicked_button == 'uprightBtnView'))
         painter.drawPath(self.uprightBtnView)
-        #
-        painter.restore()  # 恢复坐标系
 
+        icon = QPixmap('./icon/ViaUR.png')
+        icon_size = 16  # 设置图标大小
+        scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_rect = scaled_icon.rect()
+        icon_rect.moveCenter(QtCore.QPoint(radius1 / 2 - 24, -28))  # 将图标中心移动到按钮中心
+        painter.drawPixmap(icon_rect, scaled_icon)
+        painter.restore()
 
     def drawOuterCircle(self, painter):
-        """
-            绘制顶部按钮
-             :param painter:
-             :return:
-             """
         painter.save()
-        # 以下绘图保存至painter的坐标系统
-        # 设置标志位，判断鼠标是否进入该区域。如果进入该区域，则半径扩大
         if self.mouseTopView:
             radius1 = self.outerPieRadius + 4
         else:
             radius1 = self.outerPieRadius
 
-        # 绘制大扇形
+        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)
+        pathOuterChampagnePie = QtGui.QPainterPath()
+        pathOuterChampagnePie.arcMoveTo(rect, 67.5)
+        pathOuterChampagnePie.arcTo(rect, 67.5, 45)
+        pathOuterChampagnePie.lineTo(0, 0)
+        pathOuterChampagnePie.closeSubpath()
+        # pathOuterChampagnePie.addText(-5, -radius1 / 2 + 20, painter.font(), "8")
 
-        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)  # 该扇形饼圆所在的region
-        pathOuterChampagnePie = QtGui.QPainterPath()  # 新建QPainterPath对象
-        pathOuterChampagnePie.arcMoveTo(rect, 45)  # 画弧线的起点角度，从0°开始
-        pathOuterChampagnePie.arcTo(rect, 45, 45)  # 扇形饼圆弧度为self.outerChampagnePercent * 360
-        pathOuterChampagnePie.lineTo(0, 0)  # 画直线
-        pathOuterChampagnePie.closeSubpath()  # 使该路径闭合
-        pathOuterChampagnePie.addText(10, -radius1 / 2 + 20, painter.font(), "8")
- 
-        # painter.restore()
-        # 以下同理绘制小扇形
         radius = 50
         rect1 = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
         pathMidPie = QtGui.QPainterPath()
-        pathMidPie.arcMoveTo(rect1, 45)
-        pathMidPie.arcTo(rect1, 45, 45)
+        pathMidPie.arcMoveTo(rect1, 67.5)
+        pathMidPie.arcTo(rect1, 67.5, 45)
         pathMidPie.lineTo(0, 0)
         pathMidPie.closeSubpath()
 
-        # 大扇形减去小扇形，得到扇形饼圆
         self.topBtnView = pathOuterChampagnePie.subtracted(pathMidPie)
-        painter.setPen(QColor(255, 255, 255))  # 边框线条无色
-        painter.setBrush(self.get_button_color())
+        painter.setPen(QColor(255, 255, 255))
+        painter.setBrush(self.get_button_color(self.clicked_button == 'topBtnView'))
         painter.drawPath(self.topBtnView)
-        #
-        painter.restore()  # 恢复坐标系
-
+        # 
+        icon = QPixmap('./icon/ViaUp.png')
+        icon_size = 16  # 设置图标大小
+        scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_rect = scaled_icon.rect()
+        icon_rect.moveCenter(QtCore.QPoint(0, -radius1 / 2 + 12))  # 将图标中心移动到按钮中心
+        painter.drawPixmap(icon_rect, scaled_icon)
+        painter.restore()
 
     def drawrightOuterCircle(self, painter):
-        """
-            绘制顶部按钮
-             :param painter:
-             :return:
-             """
         painter.save()
-        # 以下绘图保存至painter的坐标系统
-        # 设置标志位，判断鼠标是否进入该区域。如果进入该区域，则半径扩大
         if self.mouserightTopView:
             radius1 = self.outerPieRadius + 4
         else:
             radius1 = self.outerPieRadius
 
-        # 绘制大扇形
+        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)
+        pathOuterChampagnePie = QtGui.QPainterPath()
+        pathOuterChampagnePie.arcMoveTo(rect, 112.5)
+        pathOuterChampagnePie.arcTo(rect, 112.5, 45)
+        pathOuterChampagnePie.lineTo(0, 0)
+        pathOuterChampagnePie.closeSubpath()
+        # pathOuterChampagnePie.addText(-30, -radius1 / 2 + 30, painter.font(), "7")
 
-        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)  # 该扇形饼圆所在的region
-        pathOuterChampagnePie = QtGui.QPainterPath()  # 新建QPainterPath对象
-        pathOuterChampagnePie.arcMoveTo(rect, 90)  # 画弧线的起点角度，从0°开始
-        pathOuterChampagnePie.arcTo(rect, 90, 45)  # 扇形饼圆弧度为self.outerChampagnePercent * 360
-        pathOuterChampagnePie.lineTo(0, 0)  # 画直线
-        pathOuterChampagnePie.closeSubpath()  # 使该路径闭合
-        pathOuterChampagnePie.addText(-20, -radius1 / 2 + 20, painter.font(), "7")
- 
-        # painter.restore()
-        # 以下同理绘制小扇形
         radius = 50
         rect1 = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
         pathMidPie = QtGui.QPainterPath()
-        pathMidPie.arcMoveTo(rect1, 90)
-        pathMidPie.arcTo(rect1, 90, 45)
+        pathMidPie.arcMoveTo(rect1, 112.5)
+        pathMidPie.arcTo(rect1, 112.5, 45)
         pathMidPie.lineTo(0, 0)
         pathMidPie.closeSubpath()
 
-        # 大扇形减去小扇形，得到扇形饼圆
         self.righttopBtnView = pathOuterChampagnePie.subtracted(pathMidPie)
-        painter.setPen(QColor(255, 255, 255))  # 边框线条无色
-        painter.setBrush(self.get_button_color())
+        painter.setPen(QColor(255, 255, 255))
+        painter.setBrush(self.get_button_color(self.clicked_button == 'righttopBtnView'))
         painter.drawPath(self.righttopBtnView)
-        #
-        painter.restore()  # 恢复坐标系
 
+        icon = QPixmap('./icon/ViaLU.png')
+        icon_size = 16  # 设置图标大小
+        scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_rect = scaled_icon.rect()
+        icon_rect.moveCenter(QtCore.QPoint(-26, -radius1 / 2 + 24))  # 将图标中心移动到按钮中心
+        painter.drawPixmap(icon_rect, scaled_icon)
+        painter.restore()
 
     def drawInnerPie(self, painter):
-        """
-             绘制左侧按钮
-             :param painter:
-             :return:
-             """
         painter.save()
-        # 以下绘图保存至painter的坐标系统
-        # 设置标志位，判断鼠标是否进入该区域。如果进入该区域，则半径扩大
         if self.mouseLeftView:
             radius1 = self.outerPieRadius + 4
         else:
             radius1 = self.outerPieRadius
 
-        # 绘制大扇形
+        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)
+        pathOuterChampagnePie = QtGui.QPainterPath()
+        pathOuterChampagnePie.arcMoveTo(rect, 157.5)
+        pathOuterChampagnePie.arcTo(rect, 157.5, 45)
+        pathOuterChampagnePie.lineTo(0, 0)
+        pathOuterChampagnePie.closeSubpath()
+        # pathOuterChampagnePie.addText(-radius1 / 2 + 10, 8, painter.font(), "6")
 
-        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)  # 该扇形饼圆所在的region
-        pathOuterChampagnePie = QtGui.QPainterPath()  # 新建QPainterPath对象
-        pathOuterChampagnePie.arcMoveTo(rect, 135)  # 画弧线的起点角度，从0°开始
-        pathOuterChampagnePie.arcTo(rect, 135, 45)  # 扇形饼圆弧度为self.outerChampagnePercent * 360
-        pathOuterChampagnePie.lineTo(0, 0)  # 画直线
-        pathOuterChampagnePie.closeSubpath()  # 使该路径闭合
-        pathOuterChampagnePie.addText(-radius1 / 2 + 12, -8, painter.font(), "6")
-      
-        # 以下同理绘制小扇形
         radius = 50
         rect1 = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
         pathMidPie = QtGui.QPainterPath()
-        pathMidPie.arcMoveTo(rect1, 135)
-        pathMidPie.arcTo(rect1, 135, 45)
+        pathMidPie.arcMoveTo(rect1, 157.5)
+        pathMidPie.arcTo(rect1, 157.5, 45)
         pathMidPie.lineTo(0, 0)
         pathMidPie.closeSubpath()
 
-        # 大扇形减去小扇形，得到扇形饼圆
         self.leftBtnView = pathOuterChampagnePie.subtracted(pathMidPie)
-        painter.setPen(QColor(255, 255, 255))  # 边框线条无色
-        painter.setBrush(self.get_button_color())
+        painter.setPen(QColor(255, 255, 255))
+        painter.setBrush(self.get_button_color(self.clicked_button == 'leftBtnView'))
         painter.drawPath(self.leftBtnView)
-        #
-        painter.restore()  # 恢复坐标系
 
+        icon = QPixmap('./icon/ViaLeft.png')
+        icon_size = 16  # 设置图标大小
+        scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_rect = scaled_icon.rect()
+        icon_rect.moveCenter(QtCore.QPoint(-radius1 / 2 + 12, 0))  # 将图标中心移动到按钮中心
+        painter.drawPixmap(icon_rect, scaled_icon)
+        painter.restore()
 
     def drawdownInnerPie(self, painter):
-        """
-             绘制左侧按钮
-             :param painter:
-             :return:
-             """
         painter.save()
-        # 以下绘图保存至painter的坐标系统
-        # 设置标志位，判断鼠标是否进入该区域。如果进入该区域，则半径扩大
         if self.mousedownLeftView:
             radius1 = self.outerPieRadius + 4
         else:
             radius1 = self.outerPieRadius
 
-        # 绘制大扇形
+        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)
+        pathOuterChampagnePie = QtGui.QPainterPath()
+        pathOuterChampagnePie.arcMoveTo(rect, 202.5)
+        pathOuterChampagnePie.arcTo(rect, 202.5, 45)
+        pathOuterChampagnePie.lineTo(0, 0)
+        pathOuterChampagnePie.closeSubpath()
+        # pathOuterChampagnePie.addText(-radius1 / 2 + 20, 35, painter.font(), "5")
 
-        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)  # 该扇形饼圆所在的region
-        pathOuterChampagnePie = QtGui.QPainterPath()  # 新建QPainterPath对象
-        pathOuterChampagnePie.arcMoveTo(rect, 180)  # 画弧线的起点角度，从0°开始
-        pathOuterChampagnePie.arcTo(rect, 180, 45)  # 扇形饼圆弧度为self.outerChampagnePercent * 360
-        pathOuterChampagnePie.lineTo(0, 0)  # 画直线
-        pathOuterChampagnePie.closeSubpath()  # 使该路径闭合
-        pathOuterChampagnePie.addText(-radius1 / 2 + 12, 18, painter.font(), "5")
-      
-        # 以下同理绘制小扇形
         radius = 50
         rect1 = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
         pathMidPie = QtGui.QPainterPath()
-        pathMidPie.arcMoveTo(rect1, 180)
-        pathMidPie.arcTo(rect1, 180, 45)
+        pathMidPie.arcMoveTo(rect1, 202.5)
+        pathMidPie.arcTo(rect1, 202.5, 45)
         pathMidPie.lineTo(0, 0)
         pathMidPie.closeSubpath()
 
-        # 大扇形减去小扇形，得到扇形饼圆
         self.downleftBtnView = pathOuterChampagnePie.subtracted(pathMidPie)
-        painter.setPen(QColor(255, 255, 255))  # 边框线条无色
-        painter.setBrush(self.get_button_color())
+        painter.setPen(QColor(255, 255, 255))
+        painter.setBrush(self.get_button_color(self.clicked_button == 'downleftBtnView'))
         painter.drawPath(self.downleftBtnView)
-        #
-        painter.restore()  # 恢复坐标系
+
+        icon = QPixmap('./icon/ViaDL.png')
+        icon_size = 16  # 设置图标大小
+        scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_rect = scaled_icon.rect()
+        icon_rect.moveCenter(QtCore.QPoint(-radius1 / 2 + 24, 26))  # 将图标中心移动到按钮中心
+        painter.drawPixmap(icon_rect, scaled_icon)
+
+        painter.restore()
 
     def drawBottom(self, painter):
-        """
-             绘制底部按钮
-             :param painter:
-             :return:
-             """
         painter.save()
-        # 以下绘图保存至painter的坐标系统
-        # 设置标志位，判断鼠标是否进入该区域。如果进入该区域，则半径扩大
         if self.mouseBottomView:
             radius1 = self.outerPieRadius + 4
         else:
             radius1 = self.outerPieRadius
 
-        # 绘制大扇形
+        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)
+        pathOuterChampagnePie = QtGui.QPainterPath()
+        pathOuterChampagnePie.arcMoveTo(rect, 247.5)
+        pathOuterChampagnePie.arcTo(rect, 247.5, 45)
+        pathOuterChampagnePie.lineTo(0, 0)
+        pathOuterChampagnePie.closeSubpath()
+        # pathOuterChampagnePie.addText(-5, radius1 / 2 - 8, painter.font(), "4")
 
-        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)  # 该扇形饼圆所在的region
-        pathOuterChampagnePie = QtGui.QPainterPath()  # 新建QPainterPath对象
-        pathOuterChampagnePie.arcMoveTo(rect, 225)  # 画弧线的起点角度，从0°开始
-        pathOuterChampagnePie.arcTo(rect, 225, 45)  # 扇形饼圆弧度为self.outerChampagnePercent * 360
-        pathOuterChampagnePie.lineTo(0, 0)  # 画直线
-        pathOuterChampagnePie.closeSubpath()  # 使该路径闭合
-        pathOuterChampagnePie.addText(-20, radius1/2-10, painter.font(), "4")
-
-        # 以下同理绘制小扇形
         radius = 50
         rect1 = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
         pathMidPie = QtGui.QPainterPath()
-        pathMidPie.arcMoveTo(rect1, 225)
-        pathMidPie.arcTo(rect1, 225, 45)
+        pathMidPie.arcMoveTo(rect1, 247.5)
+        pathMidPie.arcTo(rect1, 247.5, 45)
         pathMidPie.lineTo(0, 0)
         pathMidPie.closeSubpath()
 
-        # 大扇形减去小扇形，得到扇形饼圆
         self.bottomBtnView = pathOuterChampagnePie.subtracted(pathMidPie)
-        painter.setPen(QColor(255, 255, 255))  # 边框线条无色
-        painter.setBrush(self.get_button_color())
+        painter.setPen(QColor(255, 255, 255))
+        painter.setBrush(self.get_button_color(self.clicked_button == 'bottomBtnView'))
         painter.drawPath(self.bottomBtnView)
-        #
-        painter.restore()  # 恢复坐标系
+
+        icon = QPixmap('./icon/ViaDown.png')
+        icon_size = 16  # 设置图标大小
+        scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_rect = scaled_icon.rect()
+        icon_rect.moveCenter(QtCore.QPoint(0, radius1 / 2 - 12))  # 将图标中心移动到按钮中心
+        painter.drawPixmap(icon_rect, scaled_icon)
+        painter.restore()
 
     def drawrightBottom(self, painter):
-        """
-             绘制底部按钮
-             :param painter:
-             :return:
-             """
         painter.save()
-        # 以下绘图保存至painter的坐标系统
-        # 设置标志位，判断鼠标是否进入该区域。如果进入该区域，则半径扩大
         if self.mouseRightBottomView:
             radius1 = self.outerPieRadius + 4
         else:
             radius1 = self.outerPieRadius
 
-        # 绘制大扇形
+        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)
+        pathOuterChampagnePie = QtGui.QPainterPath()
+        pathOuterChampagnePie.arcMoveTo(rect, 292.5)
+        pathOuterChampagnePie.arcTo(rect, 292.5, 45)
+        pathOuterChampagnePie.lineTo(0, 0)
+        pathOuterChampagnePie.closeSubpath()
+        # pathOuterChampagnePie.addText(22, radius1 / 2 - 20, painter.font(), "3")
 
-        rect = QtCore.QRectF(-radius1 / 2, -radius1 / 2, radius1, radius1)  # 该扇形饼圆所在的region
-        pathOuterChampagnePie = QtGui.QPainterPath()  # 新建QPainterPath对象
-        pathOuterChampagnePie.arcMoveTo(rect, 270)  # 画弧线的起点角度，从0°开始
-        pathOuterChampagnePie.arcTo(rect, 270, 45)  # 扇形饼圆弧度为self.outerChampagnePercent * 360
-        pathOuterChampagnePie.lineTo(0, 0)  # 画直线
-        pathOuterChampagnePie.closeSubpath()  # 使该路径闭合
-        pathOuterChampagnePie.addText(12, radius1/2-10, painter.font(), "3")
-
-        # 以下同理绘制小扇形
         radius = 50
         rect1 = QtCore.QRectF(-radius / 2, -radius / 2, radius, radius)
         pathMidPie = QtGui.QPainterPath()
-        pathMidPie.arcMoveTo(rect1, 270)
-        pathMidPie.arcTo(rect1, 270, 45)
+        pathMidPie.arcMoveTo(rect1, 292.5)
+        pathMidPie.arcTo(rect1, 292.5, 45)
         pathMidPie.lineTo(0, 0)
         pathMidPie.closeSubpath()
 
-        # 大扇形减去小扇形，得到扇形饼圆
         self.rightbottomBtnView = pathOuterChampagnePie.subtracted(pathMidPie)
-        painter.setPen(QColor(255, 255, 255))  # 边框线条无色
-        painter.setBrush(self.get_button_color())
+        painter.setPen(QColor(255, 255, 255))
+        painter.setBrush(self.get_button_color(self.clicked_button == 'rightbottomBtnView'))
         painter.drawPath(self.rightbottomBtnView)
-        #
-        painter.restore()  # 恢复坐标系
+
+        icon = QPixmap('./icon/ViaRD.png')
+        icon_size = 16  # 设置图标大小
+        scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_rect = scaled_icon.rect()
+        icon_rect.moveCenter(QtCore.QPoint(24, radius1 / 2 - 24))  # 将图标中心移动到按钮中心
+        painter.drawPixmap(icon_rect, scaled_icon)
+
+        painter.restore()
 
     def drawMidCircle(self, painter):
-        """
-        中间按钮
-        :param painter:
-        :return:
-        """
         if self.mouseCenterView:
             radius = 40 + 4
         else:
             radius = 40
         painter.save()
-        painter.setPen(QColor(255, 255, 255))  # 边框线条无色
-        painter.setBrush(self.get_button_color())
+        painter.setPen(QColor(255, 255, 255))
+        painter.setBrush(self.get_button_color(self.clicked_button == 'centerBtnView'))
         path = QtGui.QPainterPath()
-        path.addEllipse(-radius/2, -radius/2, radius, radius)
-        # path.addText(-5, 8, painter.font(), "0")
+        path.addEllipse(-radius / 2, -radius / 2, radius, radius)
         painter.drawPath(path)
-
-        # 绘制图标
-        icon = QPixmap('./refresh_ico.png')
-        icon_rect = icon.rect()
+        icon = QPixmap('./icon/refresh_ico.png')
+        icon_size = 18  # 设置图标大小
+        scaled_icon = icon.scaled(icon_size, icon_size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        icon_rect = scaled_icon.rect()
         icon_rect.moveCenter(QtCore.QPoint(-1, -1))  # 将图标中心移动到按钮中心
-        painter.drawPixmap(icon_rect, icon)
+        painter.drawPixmap(icon_rect, scaled_icon)
 
         self.centerBtnView = path
-        # painter.drawEllipse(-radius/2, -radius/2, radius, radius)
         painter.restore()
-        # font = QFont()
 
     def paintEvent(self, event):
-        # 绘制准备工作, 启用反锯齿
         painter = QtGui.QPainter(self)
         painter.setRenderHints(QtGui.QPainter.Antialiasing | QtGui.QPainter.TextAntialiasing)
 
-        # 平移坐标中心，等比例缩放
         width = self.width()
         height = self.height()
         side = min(width, height)
-        painter.translate(width / 2, height / 2)  # 坐标中心移至窗口中心位置
-        painter.scale(side / 200.0, side / 200.0)  # 坐标刻度缩放为原来的（side/200）倍
+        painter.translate(width / 2, height / 2)
+        painter.scale(side / 120.0, side / 120.0)
 
-        # 画圆
-        self.drawOuterCircle(painter)  # 绘制顶部按钮
+        self.drawOuterCircle(painter)
         self.drawrightOuterCircle(painter)
-        self.drawMidCircle(painter)  # 绘制中间按钮
-        self.drawOuterPie(painter)  # 绘制右侧按钮
+        self.drawMidCircle(painter)
+        self.drawOuterPie(painter)
         self.drawuprightOuterPie(painter)
-        self.drawInnerPie(painter)  # 绘制左侧按钮
+        self.drawInnerPie(painter)
         self.drawdownInnerPie(painter)
-        self.drawBottom(painter)  # 绘制底部按钮
+        self.drawBottom(painter)
         self.drawrightBottom(painter)
-        # self.drawLegend(painter)  # 绘制图例
-        # self.drawTitle(painter)  # 绘制左上角文字
 
     def mouseMoveEvent(self, event):
-        print('鼠标移动')
-        print(event.pos)
-        # 坐标系转换，和之前painter转换坐标系相对应
         width = self.width()
         height = self.height()
         side = min(width, height)
-        enterPoint = QtCore.QPoint((event.pos().x() - width / 2) / side * 250.0,
-                                   (event.pos().y() - height / 2) / side * 250.0)
+        enterPoint = QtCore.QPoint((event.pos().x() - width / 2) / side * 120.0,
+                                   (event.pos().y() - height / 2) / side * 120.0)
 
-        # 判断鼠标是否进入，并置标志位
         if self.centerBtnView.contains(enterPoint):
             self.mouseCenterView = True
         else:
@@ -491,12 +433,12 @@ class UIButton(QWidget):
             self.mouseTopView = True
         else:
             self.mouseTopView = False
-        
+
         if self.righttopBtnView.contains(enterPoint):
             self.mouserightTopView = True
         else:
             self.mouserightTopView = False
-        
+
         if self.uprightBtnView.contains(enterPoint):
             self.mouseUpRightView = True
         else:
@@ -517,42 +459,57 @@ class UIButton(QWidget):
         else:
             self.mouseRightBottomView = False
 
-        self.update()  # 重绘
+        self.update()
 
     def mousePressEvent(self, a0: QtGui.QMouseEvent) -> None:
         width = self.width()
         height = self.height()
         side = min(width, height)
-        enterPoint = QtCore.QPoint((a0.pos().x() - width / 2) / side * 200.0,
-                                   (a0.pos().y() - height / 2) / side * 200.0)
-        # 判断鼠标是否进入，并置标志位
+        enterPoint = QtCore.QPoint((a0.pos().x() - width / 2) / side * 100.0,
+                                   (a0.pos().y() - height / 2) / side * 100.0)
+        self.clicked_button = None
+
         if self.centerBtnView.contains(enterPoint):
+            self.clicked_button = 'centerBtnView'
             print("centerBtnView")
 
         if self.bottomBtnView.contains(enterPoint):
+            self.clicked_button = 'bottomBtnView'
             print("bottomBtnView")
 
         if self.rightBtnView.contains(enterPoint):
+            self.clicked_button = 'rightBtnView'
             print('rightBtnView')
 
         if self.topBtnView.contains(enterPoint):
+            self.clicked_button = 'topBtnView'
             print('topBtnView')
-        
+
         if self.righttopBtnView.contains(enterPoint):
+            self.clicked_button = 'righttopBtnView'
             print("righttopBtnView")
 
         if self.uprightBtnView.contains(enterPoint):
+            self.clicked_button = 'uprightBtnView'
             print("uprightBtnView")
 
         if self.leftBtnView.contains(enterPoint):
+            self.clicked_button = 'leftBtnView'
             print('leftBtnView')
-        
+
         if self.downleftBtnView.contains(enterPoint):
+            self.clicked_button = 'downleftBtnView'
             print("downleftBtnView")
-        
+
         if self.rightbottomBtnView.contains(enterPoint):
+            self.clicked_button = 'rightbottomBtnView'
             print("rightbottomBtnView")
 
+        self.update()
+
+    def mouseReleaseEvent(self, event):
+        self.clicked_button = None
+        self.update()
 
 if __name__ == "__main__":
     import sys
